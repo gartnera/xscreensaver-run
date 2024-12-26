@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/prctl.h>
+#include <X11/keysym.h>
+#include <sys/wait.h>
 
 static int g_verbose = 0;
 
@@ -133,17 +135,9 @@ int main (int argc, char** argv)
     // sleep(1);
   }
 
-  while(1) {
-    ret = XGrabKeyboard(dis,
-             root_win,
-             KeyPressMask,
-             GrabModeAsync, GrabModeAsync, CurrentTime);
-    if(ret == GrabSuccess) {
-      break;
-    }
-    verbose_printf("Unable grab window keyboard: %d, will retry\n", ret);
-    // sleep(1);
-  }
+  XSelectInput(dis, root_win,
+    KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+
 
   /* Remove all the events from the queue. */
   XEvent event;
@@ -152,17 +146,34 @@ int main (int argc, char** argv)
       &event));
 
   /* Wait for new keyboard,mouse,etc. Exit immediately. */
-  while (1) {
+  while (1)
+  {
     memset(&event, 0, sizeof(event));
     XAllowEvents(dis, SyncPointer, CurrentTime);
     XWindowEvent(dis, root_win,
-      ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask,
-      &event);
-    break;
+                 ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask,
+                 &event);
+    KeySym key = XLookupKeysym(&event.xkey, 0);
+    if (key == XK_Escape)
+    {
+      break;
+    }
   }
 
   verbose_printf("Exiting due to X event type %d\n", event.type);
+  if (kill(chld_id, SIGHUP) == -1)
+  {
+    perror("Error sending SIGHUP");
+    return EXIT_FAILURE;
+  }
+  int status;
+  if (waitpid(chld_id, &status, 0) == -1)
+  {
+    perror("Error waiting for process");
+    return EXIT_FAILURE;
+  }
+  XUngrabPointer(dis, CurrentTime);
+  XDestroyWindow(dis, win);
+  XCloseDisplay(dis);
   return 0;
 }
-
-
