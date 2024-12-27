@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# we use gamescope to allow X11 windows to render at full resolution. sway forces X11 windows to be scaled.
+
+# use on wayland-info to work on multiple compositors
+info=$(wayland-info | grep -E "refresh" | tail -n1)
+width=$(echo $info | grep -oP 'width: \K[0-9]+')
+height=$(echo $info | grep -oP 'height: \K[0-9]+')
+raw_refresh=$(echo $info | grep -oP 'refresh: \K[0-9.]+')
+refresh=$(python -c "from math import ceil; print(ceil($raw_refresh));")
+
+exec gamescope -H $height -W $width -h $height -w $width -r $refresh -o $refresh -f --adaptive-sync --force-grab-cursor -- "$@"

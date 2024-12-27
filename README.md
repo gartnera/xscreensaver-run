@@ -5,32 +5,50 @@ This tiny program may be used to run screensavers from
 [XScreenSaver](https://www.jwz.org/xscreensaver/) collection synchronously,
 in fullscreen and without additional effects like screen locks or timers.
 
+This is a fork of [xscreensaver-run](https://github.com/sergei-mironov/xscreensaver-run) which allow you to provide a list of screensavers to run in a file. This is nice because there is no flashing when transitioning between multiple screensavers.
+
 See also <https://unix.stackexchange.com/questions/290698/how-to-manually-start-an-xscreensaver-application-in-root-window-full-screen>
 
 
 Build
 -----
 
-Just make install
+Just `make`
 
-    $ make install
+    make
+
+Install with
+
+    make install
 
 
 NixOS users may use the following commands to install the application in the
 current user's profile:
 
-    $ nix-build
-    $ nix-env -i ./result
+    nix-build
+    nix-env -i ./result
 
 Usage
 -----
 
-Run any screensaver from Xscreensaver collection by typing `xscreensaver-run
-SCREENSAVER_APP_ARGS`. For example:
+Generate a list of screensavers to run. Example:
 
-    $ ./xscreensaver-run /usr/libexec/xscreensaver/apple2 -text -program 'uname -a'
+    find /usr/lib/xscreensaver/ -type f | grep -v xscreensaver- | shuf > xscreensaver-list
 
-Enjoy!
+Your distro might install screensaver files to a different location. You can edit the file and provide arguments to each screensaver if need. 
+
+Run like this:
+
+    ./xscreensaver-run ./xscreensaver-list
+
+Press ESC to go to the next screensaver. Many screensavers accept mouse and keyboard input. ENTER typically resets the current animation.
+
+Usage (gamescope)
+-----
+
+[sway](https://github.com/swaywm/sway) forces X11 windows to be scaled. You can use [gamescope](https://github.com/ValveSoftware/gamescope) ensure that a fullscreen X11 window is not scaled.
+
+    ./gamescope-xscreensaver
 
 
 Development notes
